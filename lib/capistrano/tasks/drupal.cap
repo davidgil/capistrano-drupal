@@ -1,0 +1,10 @@
+namespace :drupal do
+  task :build do
+    on release_roles(:all) do
+        #lo dejo en blanco para poder llamar a los after
+    end
+    after "drupal:build", "drush:updatedb"
+    after "drupal:build", "drush:fra"
+    after "drupal:build", "cache:all"
+  end
+end

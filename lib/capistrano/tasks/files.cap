@@ -1,0 +1,41 @@
+set :rsync_options, "--recursive --times --rsh=ssh --compress --human-readable --progress"
+
+namespace :sync do
+  desc "Pull shared directories (from remote to local)"
+  task :pull_files do
+    roles(:app).each do |host|
+      user = host.user + "@" if !host.user.nil?
+      run_locally do
+        fetch(:linked_dirs).each do |dir|
+          remote_dir = shared_path.join(dir)
+          exec "rsync #{fetch(:rsync_options)} #{user}#{host.hostname}:#{remote_dir}/ #{fetch(:shared_local_dir)}/#{dir}"
+        end
+      end
+    end
+  end
+
+  desc "Pull the database (from remote to local)"
+  task :pull_db do
+    on roles(:app) do |host|
+      revision = nil
+      within repo_path do
+        revision = capture(:git, 'rev-parse', :HEAD)[0,5]
+      end
+      within current_path do
+        timestamp = Time.now.strftime('%Y%m%d-%H%M%S')
+        file = "#{fetch(:backup_dir)}/release-#{timestamp}-#{revision}.sql"
+        begin
+          execute fetch(:drush_cmd), 'sql-dump', fetch(:drush_sql_dump_options), "--result-file=#{file}"
+        rescue
+        end
+        user = host.user
+        run_locally do
+          exec "scp #{user}@#{host.hostname}:#{file}.gz #{fetch(:shared_local_dir)}/release-#{timestamp}-#{revision}.sql.gz;
+          gzip -d #{fetch(:shared_local_dir)}/release-#{timestamp}-#{revision}.sql.gz;
+          drush sql-cli <#{fetch(:shared_local_dir)}/release-#{timestamp}-#{revision}.sql;
+          rm #{fetch(:shared_local_dir)}/release-#{timestamp}-#{revision}.sql;"
+        end
+      end
+    end
+  end
+end
