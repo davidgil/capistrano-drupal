@@ -1,4 +1,4 @@
-capistranorb-drupal
+capistrano-drupal
 ====================
 Capistrano 3 recipes to deploy drupal projects.
 
@@ -36,6 +36,6 @@ Add your [Authentication & Authorisation](http://www.capistranorb.com/documentat
 
 
 ## Based in:
-https://github.com/mordonez/capistranorb-drupal
-https://github.com/generoi/capistrano-tasks
+* https://github.com/mordonez/capistranorb-drupal
+* https://github.com/generoi/capistrano-tasks
 
